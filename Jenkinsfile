@@ -1,5 +1,9 @@
 pipeline {
     agent any
+    
+    environment {
+        DOCKER_CREDENTIALS_ID = 'dockerhub'
+    }
  
     stages {
         stage('Checkout') {
@@ -19,7 +23,7 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-credentials-id') {
+                    docker.withRegistry('https://index.docker.io/v1/', dockerhub) {
                         docker.image('rani2909/nginx:latest').push('latest')
                     }
                 }
@@ -28,8 +32,21 @@ pipeline {
  
         stage('Deploy to EC2') {
             steps {
-                // Use SSH or other deployment tools to deploy the Docker image to your EC2 instance
-                ssh 'ec2-3-84-2-134.compute-1.amazonaws.com' 'docker pull rani2909/nginx:latest && docker stop cicd_pipeline && docker rm cicd_pipeline && docker run -d --name cicd_pipeline -p 80:80 nginx:latest'
+                script {
+                    // Ensure Docker is installed and configured on the Jenkins agent
+                    sh 'docker --version'
+                    
+                    // Use AWS credentials to interact with EC2
+                    withAWS(credentials: 'EC2', region: 'us-east-1 {
+                        // Pull the Docker image from Docker Hub
+                        sh 'docker pull rani2909/nginx:latest'
+                        
+                        // Stop and remove existing container, then run a new one
+                        sh 'docker stop cicd_pipeline || true'
+                        sh 'docker rm cicd_pipeline || true'
+                        sh 'docker run -d --name cicd_pipeline -p 80:80 rani2909/nginx:latest'
+                    }
+                }
             }
         }
     }
