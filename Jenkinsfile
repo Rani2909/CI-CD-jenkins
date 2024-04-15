@@ -1,25 +1,35 @@
 pipeline {
     agent any
-    stages{
-        stage('code'){
-            steps{
-                git url: 'https://github.com/Rani2909/CI-CD-jenkins.git', branch: 'main'
+ 
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/Rani2909/CI-CD-jenkins.git'
             }
         }
-        
-        stage('Build'){
-            steps{
-                sh 'docker build . -t react-django-docker-img:latest'
+ 
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build('rani2909/healthcare:latest')
+                }
             }
         }
-        stage('Test'){
-            steps{
-                echo "Testing"
+ 
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-credentials-id') {
+                        docker.image('rani2909/healthcare:latest').push('latest')
+                    }
+                }
             }
         }
-        stage('Deploy'){
-            steps{
-                sh "docker run -d --name react-django-docker-jenkins -p 8002:8002 react-django-docker-img:latest"
+ 
+        stage('Deploy to EC2') {
+            steps {
+                // Use SSH or other deployment tools to deploy the Docker image to your EC2 instance
+                ssh 'ec2-3-84-2-134.compute-1.amazonaws.com' 'docker pull rani2909/healthcare:latest'
             }
         }
     }
