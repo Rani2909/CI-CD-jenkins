@@ -29,7 +29,7 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 // Use SSH or other deployment tools to deploy the Docker image to your EC2 instance
-                ssh 'ec2-3-84-2-134.compute-1.amazonaws.com' 'docker pull rani2909/healthcare:latest && docker stop cicd_pipeline && docker rm cicd_pipeline && docker run -d --name cicd_pipeline -p 80:80 nginx:latest'
+                ssh 'ec2-3-84-2-134.compute-1.amazonaws.com' 'docker pull rani2909/nginx:latest && docker stop cicd_pipeline && docker rm cicd_pipeline && docker run -d --name cicd_pipeline -p 80:80 nginx:latest'
             }
         }
     }
