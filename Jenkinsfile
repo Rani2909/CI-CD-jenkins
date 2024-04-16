@@ -15,7 +15,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build('rani2909/nginx:latest')
+                    docker.build('rani2909/jenkins:nginx')
                 }
             }
         }
@@ -23,8 +23,8 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', dockerhub) {
-                        docker.image('rani2909/nginx:latest').push('latest')
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID ) {
+                        docker.image('rani2909/jenkins:nginx').push('latest')
                     }
                 }
             }
@@ -39,12 +39,12 @@ pipeline {
                     // Use AWS credentials to interact with EC2
                     withAWS(credentials: 'EC2', region: 'us-east-1 {
                         // Pull the Docker image from Docker Hub
-                        sh 'docker pull rani2909/nginx:latest'
+                        sh 'docker pull rani2909/jenkins:nginx'
                         
                         // Stop and remove existing container, then run a new one
                         sh 'docker stop cicd_pipeline || true'
                         sh 'docker rm cicd_pipeline || true'
-                        sh 'docker run -d --name cicd_pipeline -p 80:80 rani2909/nginx:latest'
+                        sh 'docker run -d --name cicd_pipeline -p 80:80 rani2909/jenkins:nginx'
                     }
                 }
             }
